@@ -212,6 +212,30 @@ function parseNearFilter(nearInput) {
   };
 }
 
+function extractImageIdFromPayload(payload) {
+  if (!payload) return null;
+  if (payload.image_id && typeof payload.image_id === "string") {
+    return payload.image_id.trim();
+  }
+  if (typeof payload.content === "string") {
+    const m = payload.content.match(/\[(?:Cloudflare Images ID|图片 ID):\s*([a-zA-Z0-9_-]+)\]/i);
+    if (m) return m[1].trim();
+  }
+  return null;
+}
+
+async function getSignedImageUrl(imageId, env, expiresIn = 7200) {
+  if (!imageId || !env.IMAGES || !env.IMAGES.hosted) return "";
+  try {
+    return await env.IMAGES.hosted.image(imageId).signedUrl({
+      variant: "public",
+      expiresIn
+    });
+  } catch (e) {
+    return "";
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -233,7 +257,7 @@ export default {
       return jsonResponse({
         status: "healthy",
         service: "constancy-back-garden",
-        version: "1.2.0",
+        version: "1.3.0",
         domain: env.DOMAIN || "search.kufof.uk",
         qdrant_url: env.QDRANT_URL
       });
@@ -317,17 +341,13 @@ export default {
         const body = await request.json().catch(() => ({}));
         const query = (body.query || "").toString().trim();
         const tab = (body.tab || "all").toString();
-        const limit = Math.min(Math.max(parseInt(body.limit) || 20, 1), 50);
+        const limit = Math.min(Math.max(parseInt(body.limit) || 24, 1), 50);
 
         const dateFrom = parseDateFilter(body.date_from, false);
         const dateTo = parseDateFilter(body.date_to, true);
         const near = parseNearFilter(body.near);
-        const hasStructuredFilter = Boolean(dateFrom || dateTo || near);
 
-        if (!query && !hasStructuredFilter) {
-          return errorResponse("Search query or structured filter is required", 400);
-        }
-
+        // Vectorize if text query exists; otherwise scroll by time
         const queryVector = query ? await getQueryEmbedding(query, env) : null;
         const searchImages = tab === "all" || tab === "images";
         const searchNotes = tab === "all" || tab === "notes";
@@ -481,21 +501,34 @@ export default {
                   return tB - tA;
                 });
               }
-              return points.map(pt => ({
-                id: pt.id,
-                score: pt.score ?? 1.0,
-                type: pt.payload?.type,
-                title: pt.payload?.title || pt.payload?.entities?.[0] || "无标题便签",
-                content: pt.payload?.content || "",
-                tags: pt.payload?.tags || [],
-                date: pt.payload?.date || (pt.payload?.timestamp ? pt.payload.timestamp.slice(0, 10) : ""),
-                timestamp: pt.payload?.timestamp,
-                image_id: pt.payload?.image_id,
-                has_base64: Boolean(pt.payload?.base64),
-                mime_type: pt.payload?.mime_type,
-                c_h: pt.payload?.ch_prior,
-                sha256: pt.payload?.sha256
-              }));
+              return Promise.all(
+                points.map(async pt => {
+                  const assocImageId = extractImageIdFromPayload(pt.payload);
+                  const imageUrl = assocImageId ? await getSignedImageUrl(assocImageId, env) : "";
+                  return {
+                    id: pt.id,
+                    score: pt.score ?? 1.0,
+                    type: pt.payload?.type,
+                    title: pt.payload?.title || pt.payload?.entities?.[0] || "无标题便签",
+                    content: pt.payload?.content || "",
+                    tags: pt.payload?.tags || [],
+                    date: pt.payload?.date || (pt.payload?.timestamp ? pt.payload.timestamp.slice(0, 10) : ""),
+                    timestamp: pt.payload?.timestamp,
+                    image_id: assocImageId || undefined,
+                    image_url: imageUrl || undefined,
+                    image: assocImageId && imageUrl ? {
+                      id: assocImageId,
+                      image_id: assocImageId,
+                      url: imageUrl,
+                      title: pt.payload?.title || "便签附图"
+                    } : null,
+                    has_base64: Boolean(pt.payload?.base64),
+                    mime_type: pt.payload?.mime_type,
+                    c_h: pt.payload?.ch_prior,
+                    sha256: pt.payload?.sha256
+                  };
+                })
+              );
             })
           );
         } else {
@@ -504,6 +537,21 @@ export default {
 
         const [resolvedImages, resolvedNotes] = await Promise.all(tasks);
 
+        // Enrich notes with full image object if available from resolvedImages
+        const imgMap = new Map();
+        for (const img of resolvedImages) {
+          if (img.image_id) imgMap.set(img.image_id, img);
+        }
+
+        for (const note of resolvedNotes) {
+          if (note.image_id && imgMap.has(note.image_id)) {
+            note.image = imgMap.get(note.image_id);
+            if (!note.image_url && note.image.url) {
+              note.image_url = note.image.url;
+            }
+          }
+        }
+
         if (tab === "images") {
           return jsonResponse({ success: true, tab, results: resolvedImages });
         }
@@ -511,18 +559,39 @@ export default {
           return jsonResponse({ success: true, tab, results: resolvedNotes });
         }
 
-        // Deduplicate in "all" tab: filter out notes whose associated image is already present in resolvedImages
-        const returnedImgIds = new Set(resolvedImages.map(img => img.image_id).filter(Boolean));
-        const deduplicatedNotes = resolvedNotes.filter(note => {
-          const assocId = note.image_id || (note.content && (note.content.match(/\[(?:Cloudflare Images ID|图片 ID):\s*([a-zA-Z0-9_-]+)\]/i) || [])[1]);
-          return !assocId || !returnedImgIds.has(assocId);
+        // Deduplicate in "all" tab:
+        // Keep ALL notes! If a note has an associated photo, remove that photo from standalone images to prevent duplicate cards.
+        const referencedImageIds = new Set(resolvedNotes.map(n => n.image_id).filter(Boolean));
+        const standaloneImages = resolvedImages.filter(img => !referencedImageIds.has(img.image_id));
+
+        // Build merged unified feed list
+        const merged = [
+          ...resolvedNotes.map(n => ({
+            ...n,
+            feed_type: "note",
+            sort_time: n.timestamp || (n.date ? n.date + "T00:00:00Z" : "")
+          })),
+          ...standaloneImages.map(img => ({
+            ...img,
+            feed_type: "image",
+            sort_time: img.captured_at || img.created_at || ""
+          }))
+        ];
+
+        // Default sort: reverse chronological (newest first)
+        merged.sort((a, b) => {
+          const tA = new Date(a.sort_time || 0).getTime();
+          const tB = new Date(b.sort_time || 0).getTime();
+          return tB - tA;
         });
 
         return jsonResponse({
           success: true,
           tab: "all",
-          images: resolvedImages,
-          notes: deduplicatedNotes
+          query: query || "",
+          notes: resolvedNotes,
+          images: standaloneImages,
+          merged
         });
       } catch (err) {
         return errorResponse("Search failed: " + err.message, 500);
@@ -551,6 +620,13 @@ export default {
         const qdrantData = await qdrantRes.json();
         const points = qdrantData.result?.points || [];
 
+        // Sort reverse chronological by captured_at || created_at
+        points.sort((a, b) => {
+          const tA = new Date(a.payload?.captured_at || a.payload?.created_at || 0).getTime();
+          const tB = new Date(b.payload?.captured_at || b.payload?.created_at || 0).getTime();
+          return tB - tA;
+        });
+
         const results = await Promise.all(
           points.map(async pt => {
             const imageId = pt.payload?.image_id;
@@ -572,6 +648,7 @@ export default {
               tags: pt.payload?.tags || [],
               exif: pt.payload?.exif || null,
               location: pt.payload?.location || null,
+              captured_at: pt.payload?.captured_at || pt.payload?.created_at,
               created_at: pt.payload?.created_at,
               url: displayUrl
             };
@@ -614,19 +691,40 @@ export default {
         const qdrantData = await qdrantRes.json();
         const points = qdrantData.result?.points || [];
 
-        const results = points.map(pt => ({
-          id: pt.id,
-          type: pt.payload?.type,
-          title: pt.payload?.title || pt.payload?.entities?.[0] || "无标题便签",
-          content: pt.payload?.content || "",
-          tags: pt.payload?.tags || [],
-          date: pt.payload?.date || (pt.payload?.timestamp ? pt.payload.timestamp.slice(0, 10) : ""),
-          timestamp: pt.payload?.timestamp,
-          has_base64: Boolean(pt.payload?.base64),
-          mime_type: pt.payload?.mime_type,
-          c_h: pt.payload?.ch_prior,
-          sha256: pt.payload?.sha256
-        }));
+        // Sort reverse chronological by timestamp
+        points.sort((a, b) => {
+          const tA = new Date(a.payload?.timestamp || 0).getTime();
+          const tB = new Date(b.payload?.timestamp || 0).getTime();
+          return tB - tA;
+        });
+
+        const results = await Promise.all(
+          points.map(async pt => {
+            const assocImageId = extractImageIdFromPayload(pt.payload);
+            const imageUrl = assocImageId ? await getSignedImageUrl(assocImageId, env) : "";
+            return {
+              id: pt.id,
+              type: pt.payload?.type,
+              title: pt.payload?.title || pt.payload?.entities?.[0] || "无标题便签",
+              content: pt.payload?.content || "",
+              tags: pt.payload?.tags || [],
+              date: pt.payload?.date || (pt.payload?.timestamp ? pt.payload.timestamp.slice(0, 10) : ""),
+              timestamp: pt.payload?.timestamp,
+              image_id: assocImageId || undefined,
+              image_url: imageUrl || undefined,
+              image: assocImageId && imageUrl ? {
+                id: assocImageId,
+                image_id: assocImageId,
+                url: imageUrl,
+                title: pt.payload?.title || "便签附图"
+              } : null,
+              has_base64: Boolean(pt.payload?.base64),
+              mime_type: pt.payload?.mime_type,
+              c_h: pt.payload?.ch_prior,
+              sha256: pt.payload?.sha256
+            };
+          })
+        );
 
         return jsonResponse({
           success: true,
