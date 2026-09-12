@@ -1,0 +1,16 @@
+{
+  "name": "vec-image-search",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Multimodal Image Search with Cloudflare Images, Voyage AI, and Qdrant",
+  "main": "src/index.js",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.114.17"
+  },
+  "dependencies": {
+    "exifr": "^7.1.3"
+  }
+}
