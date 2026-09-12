@@ -415,6 +415,11 @@ export function renderDashboardHtml(userEmail) {
     .chip-label { font-size: 0.78rem; color: var(--text-dim); }
 
     /* ==================== 2. Active Search Mode ==================== */
+    #activeSection {
+      display: none;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
     .search-panel {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -957,7 +962,7 @@ export function renderDashboardHtml(userEmail) {
     </div>
 
     <!-- ==================== 2. Active Search / Results Mode ==================== -->
-    <div id="activeSection" style="display:none; display:flex; flex-direction:column; gap:1.25rem;">
+    <div id="activeSection">
       <div class="search-panel">
         <div class="search-bar-wrap">
           <input type="text" id="activeSearchInput" class="search-input" placeholder="输入关键词检索记忆、便签或视觉图片... (Enter 键刷新)">
