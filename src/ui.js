@@ -1,6 +1,6 @@
 /**
  * Constancy · 后花园 (Back Garden) UI Module
- * Sleek, dark-themed responsive admin & search dashboard
+ * Sleek, dark-themed responsive admin, cross-modal search & stream browse dashboard
  */
 
 export function renderLoginHtml(errorMessage = "") {
@@ -180,10 +180,12 @@ export function renderDashboardHtml(userEmail) {
       --accent: #38bdf8;
       --accent-hover: #0284c7;
       --accent-glow: rgba(56, 189, 248, 0.25);
+      --purple: #a855f7;
+      --purple-hover: #9333ea;
+      --purple-glow: rgba(168, 85, 247, 0.25);
       --text: #f3f4f6;
       --text-muted: #9ca3af;
       --text-dim: #6b7280;
-      --success: #34d399;
       --badge-bg: #1e293b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -219,7 +221,9 @@ export function renderDashboardHtml(userEmail) {
       gap: 0.75rem;
       cursor: pointer;
       user-select: none;
+      transition: opacity 0.2s;
     }
+    .logo-group:hover { opacity: 0.85; }
     .logo-icon {
       width: 36px;
       height: 36px;
@@ -299,18 +303,19 @@ export function renderDashboardHtml(userEmail) {
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
+      width: 100%;
     }
     .claude-banner span { display: flex; align-items: center; gap: 0.5rem; }
 
     /* ==================== 1. Google-Style Hero Mode ==================== */
     .hero-section {
       max-width: 780px;
-      margin: 5rem auto 3rem auto;
+      margin: 4.5rem auto 2.5rem auto;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      gap: 2rem;
+      gap: 1.85rem;
       animation: fadeIn 0.3s ease-out;
       width: 100%;
     }
@@ -333,7 +338,7 @@ export function renderDashboardHtml(userEmail) {
       letter-spacing: -0.02em;
     }
     .hero-tagline {
-      font-size: 0.96rem;
+      font-size: 0.95rem;
       color: var(--text-muted);
       margin-top: 0.35rem;
     }
@@ -383,12 +388,32 @@ export function renderDashboardHtml(userEmail) {
       background: #7dd3fc;
       box-shadow: 0 4px 15px var(--accent-glow);
     }
-    .hero-chips {
+    .hero-action-bar {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 0.65rem;
       align-items: center;
       justify-content: center;
+    }
+    .btn-hero-stream {
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      color: #ffffff;
+      border: none;
+      padding: 0.5rem 1.25rem;
+      border-radius: 22px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .btn-hero-stream:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+      filter: brightness(1.1);
     }
     .chip {
       background: #0f1523;
@@ -401,24 +426,14 @@ export function renderDashboardHtml(userEmail) {
       transition: all 0.15s;
     }
     .chip:hover { border-color: var(--accent); color: var(--text); background: #162033; }
-    .chip-accent {
-      background: rgba(56, 189, 248, 0.12) !important;
-      color: #38bdf8 !important;
-      border-color: rgba(56, 189, 248, 0.45) !important;
-      font-weight: 600 !important;
-      box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);
-    }
-    .chip-accent:hover {
-      background: rgba(56, 189, 248, 0.25) !important;
-      border-color: #38bdf8 !important;
-    }
     .chip-label { font-size: 0.78rem; color: var(--text-dim); }
 
-    /* ==================== 2. Active Search Mode ==================== */
+    /* ==================== 2. Active Mode (Search & Stream) ==================== */
     #activeSection {
       display: none;
       flex-direction: column;
       gap: 1.25rem;
+      animation: fadeIn 0.2s ease-out;
     }
     .search-panel {
       background: var(--card-bg);
@@ -429,7 +444,6 @@ export function renderDashboardHtml(userEmail) {
       flex-direction: column;
       gap: 0.9rem;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      animation: fadeIn 0.2s ease-out;
     }
     .search-bar-wrap {
       display: flex;
@@ -464,6 +478,23 @@ export function renderDashboardHtml(userEmail) {
       font-size: 0.92rem;
     }
     .btn-search:hover { background: #7dd3fc; box-shadow: 0 4px 12px var(--accent-glow); }
+    .btn-stream-switch {
+      background: #0f1523;
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      color: #c084fc;
+      padding: 0.72rem 1rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    .btn-stream-switch:hover {
+      background: rgba(168, 85, 247, 0.15);
+      border-color: #a855f7;
+      color: #e9d5ff;
+    }
     .btn-back-hero {
       background: #0f1523;
       border: 1px solid var(--card-border);
@@ -487,9 +518,30 @@ export function renderDashboardHtml(userEmail) {
       padding-top: 0.4rem;
       border-top: 1px solid rgba(255,255,255,0.06);
     }
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .mode-badge {
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.3rem 0.75rem;
+      border-radius: 8px;
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      white-space: nowrap;
+    }
+    .mode-badge-stream {
+      background: rgba(168, 85, 247, 0.12);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.35);
+    }
     .nav-tabs {
       display: flex;
-      background: #0f1523;
+      background: #0b0f19;
       border: 1px solid var(--card-border);
       border-radius: 10px;
       padding: 0.25rem;
@@ -499,29 +551,30 @@ export function renderDashboardHtml(userEmail) {
       background: transparent;
       border: none;
       color: var(--text-muted);
-      padding: 0.45rem 0.95rem;
+      padding: 0.4rem 0.85rem;
       border-radius: 7px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s;
       white-space: nowrap;
     }
     .tab-btn.active {
       background: var(--card-bg);
       color: var(--text);
+      font-weight: 600;
       box-shadow: 0 2px 6px rgba(0,0,0,0.4);
     }
-    .toolbar-right {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
+    .tab-btn-purple.active {
+      background: rgba(168, 85, 247, 0.2);
+      color: #e9d5ff;
+      border: 1px solid rgba(168, 85, 247, 0.4);
     }
     .sort-group {
       display: flex;
       align-items: center;
       gap: 0.25rem;
-      background: #0f1523;
+      background: #0b0f19;
       border: 1px solid var(--card-border);
       border-radius: 8px;
       padding: 0.2rem 0.35rem;
@@ -548,17 +601,30 @@ export function renderDashboardHtml(userEmail) {
       font-weight: 600;
       box-shadow: 0 1px 4px rgba(0,0,0,0.3);
     }
+    .stream-sort-indicator {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      background: #0b0f19;
+      border: 1px solid var(--card-border);
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      white-space: nowrap;
+    }
     .results-badge {
       font-size: 0.78rem;
       color: var(--text-muted);
       background: #0f1523;
       border: 1px solid var(--card-border);
-      padding: 0.3rem 0.65rem;
+      padding: 0.32rem 0.75rem;
       border-radius: 20px;
+      white-space: nowrap;
     }
 
     /* ==================== 3. Unified Mixed Grid & Cards ==================== */
-    .unified-feed-grid, .notes-grid, .results-grid {
+    .unified-feed-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 1.25rem;
@@ -610,6 +676,29 @@ export function renderDashboardHtml(userEmail) {
       border-radius: 6px;
       font-size: 0.72rem;
       font-weight: 600;
+    }
+    .score-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .score-badge-inline {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 0.15rem 0.45rem;
+      border-radius: 6px;
+      white-space: nowrap;
     }
     .note-inner {
       padding: 1.1rem 1.2rem;
@@ -702,18 +791,17 @@ export function renderDashboardHtml(userEmail) {
       display: block;
     }
     .card:hover .card-img { transform: scale(1.03); }
-    .score-badge {
+    .card-type-badge {
       position: absolute;
       top: 8px;
-      right: 8px;
+      left: 8px;
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(8px);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.15);
       padding: 0.2rem 0.5rem;
       border-radius: 6px;
       font-size: 0.72rem;
-      font-weight: 700;
     }
     .card-body {
       padding: 0.9rem 1rem;
@@ -874,6 +962,7 @@ export function renderDashboardHtml(userEmail) {
       text-align: center;
       padding: 3.5rem 1rem;
       color: var(--text-muted);
+      grid-column: 1 / -1;
     }
     .empty-state h3 { margin-bottom: 0.5rem; color: #f1f5f9; }
 
@@ -910,14 +999,16 @@ export function renderDashboardHtml(userEmail) {
       .claude-banner { flex-direction: column; align-items: flex-start; }
       .hero-section { margin-top: 2rem; }
       .results-toolbar { flex-direction: column; align-items: stretch; }
-      .toolbar-right { justify-content: space-between; }
+      .toolbar-left, .toolbar-right { justify-content: space-between; width: 100%; }
+      .search-bar-wrap { flex-wrap: wrap; }
+      .search-input { min-width: 100%; }
     }
   </style>
 </head>
 <body>
   <header>
     <div class="header-inner">
-      <div class="logo-group" id="headerLogo">
+      <div class="logo-group" id="headerLogo" title="点击返回极简主页">
         <div class="logo-icon">🧬</div>
         <div class="title-group">
           <h1>Constancy · 后花园 <span class="badge">Back Garden</span></h1>
@@ -931,21 +1022,21 @@ export function renderDashboardHtml(userEmail) {
   </header>
 
   <main>
-    <!-- ==================== 1. Google-Style Hero Mode (Default Initial View) ==================== -->
+    <!-- ==================== 1. Google-Style Hero Mode (Initial Load) ==================== -->
     <div id="heroSection" class="hero-section">
       <div class="hero-brand">
         <div class="hero-logo-icon">🧬</div>
         <h1 class="hero-title">Constancy · 后花园</h1>
-        <p class="hero-tagline">数字海马体 · 多模态图文记忆时光轴与跨模态向量检索</p>
+        <p class="hero-tagline">数字海马体 · 多模态记忆时光全集与跨模态向量检索</p>
       </div>
 
       <div class="hero-search-panel">
         <form id="heroSearchForm" class="hero-search-bar" action="javascript:void(0);">
-          <input type="text" id="heroSearchInput" class="hero-search-input" placeholder="输入关键词检索记忆、便签或视觉图片... (Enter 键开始)" autofocus autocomplete="off">
+          <input type="text" id="heroSearchInput" class="hero-search-input" placeholder="跨模态检索记忆、便签或视觉图片... (按 Enter 键开始)" autofocus autocomplete="off">
           <button type="submit" id="heroSearchBtn" class="btn-hero-search">智能检索</button>
         </form>
-        <div class="hero-chips">
-          <button type="button" class="chip chip-accent" id="btnBrowseLatest">🕒 浏览最新时光轴</button>
+        <div class="hero-action-bar">
+          <button type="button" class="btn-hero-stream" id="btnBrowseLatest">📖 漫游时光全集 (浏览全部最新)</button>
           <span class="chip-label">快捷检索：</span>
           <button type="button" class="chip chip-query" data-query="MinIO 部署架构">MinIO 部署架构</button>
           <button type="button" class="chip chip-query" data-query="服务器机柜">服务器机柜</button>
@@ -955,57 +1046,65 @@ export function renderDashboardHtml(userEmail) {
         </div>
       </div>
 
-      <div class="claude-banner" style="width:100%;">
+      <div class="claude-banner">
         <span>💡 <b>资产录入提示</b>：照片与资产入库请直接在 Claude 对话中发送图片，外脑将自动深度识别并录入图库与便签。</span>
         <span style="font-size: 0.78rem; opacity: 0.8;">Voyage-Multimodal-3.5 统一向量引擎</span>
       </div>
     </div>
 
-    <!-- ==================== 2. Active Search / Results Mode ==================== -->
+    <!-- ==================== 2. Active View (Search Mode or Stream Mode) ==================== -->
     <div id="activeSection">
       <div class="search-panel">
         <form id="activeSearchForm" class="search-bar-wrap" action="javascript:void(0);">
-          <input type="text" id="activeSearchInput" class="search-input" placeholder="输入关键词检索记忆、便签或视觉图片... (Enter 键刷新)" autocomplete="off">
+          <input type="text" id="activeSearchInput" class="search-input" placeholder="输入关键词跨模态检索，或留空漫游时光全集... (按 Enter 键确认)" autocomplete="off">
           <button type="submit" id="activeSearchBtn" class="btn-search">智能检索</button>
+          <button type="button" id="btnActiveStream" class="btn-stream-switch" title="切换到不搜索的全量时光全集">📖 漫游时光</button>
           <button type="button" id="btnBackHero" class="btn-back-hero" title="返回极简主页">✕ 返回主页</button>
         </form>
-        <div class="results-toolbar">
-          <div class="nav-tabs">
-            <button class="tab-btn active" data-tab="all">🔍 聚合时光轴 (图文混排)</button>
-            <button class="tab-btn" data-tab="images">🖼️ 视觉图库</button>
-            <button class="tab-btn" data-tab="notes">📝 便签备忘</button>
+
+        <!-- Search Mode Toolbar -->
+        <div id="searchToolbar" class="results-toolbar" style="display:none;">
+          <div class="toolbar-left">
+            <span id="searchQueryBadge" class="mode-badge">🎯 检索结果</span>
+            <div class="nav-tabs" id="searchTabs">
+              <button class="tab-btn active" data-search-tab="all">🔍 综合检索 (<span id="countAll">0</span>)</button>
+              <button class="tab-btn" data-search-tab="images">📷 视觉图片 (<span id="countImages">0</span>)</button>
+              <button class="tab-btn" data-search-tab="notes">📝 便签备忘 (<span id="countNotes">0</span>)</button>
+            </div>
           </div>
           <div class="toolbar-right">
             <div class="sort-group">
               <span class="sort-label">排序：</span>
-              <button class="btn-sort active" id="sortTimeBtn" data-sort="time">🕒 最新优先</button>
-              <button class="btn-sort" id="sortScoreBtn" data-sort="score">🎯 匹配度优先</button>
+              <button class="btn-sort active" id="sortScoreBtn" title="最匹配优先">🎯 匹配度优先</button>
+              <button class="btn-sort" id="sortTimeBtn" title="最新记录优先">🕒 按时间倒序</button>
             </div>
-            <span id="resultsCountBadge" class="results-badge"></span>
+            <span id="searchCountBadge" class="results-badge"></span>
+          </div>
+        </div>
+
+        <!-- Stream Mode Toolbar -->
+        <div id="streamToolbar" class="results-toolbar" style="display:none;">
+          <div class="toolbar-left">
+            <span class="mode-badge mode-badge-stream">📖 漫游时光全集 (合库流)</span>
+            <div class="nav-tabs" id="streamTabs">
+              <button class="tab-btn tab-btn-purple active" data-stream-filter="all">🌐 全部时光 (<span id="streamCountTotal">0</span>)</button>
+              <button class="tab-btn tab-btn-purple" data-stream-filter="images">📷 纯摄影照片 (<span id="streamCountImages">0</span>)</button>
+              <button class="tab-btn tab-btn-purple" data-stream-filter="notes">📝 便签与备忘 (<span id="streamCountNotes">0</span>)</button>
+            </div>
+          </div>
+          <div class="toolbar-right">
+            <span class="stream-sort-indicator">🕒 严格按时间倒序 (最新在最前)</span>
+            <span id="streamCountBadge" class="results-badge"></span>
           </div>
         </div>
       </div>
 
-      <!-- Content Container -->
+      <!-- Feed Container -->
       <div id="contentContainer">
         <div id="loadingState" class="empty-state" style="display:none;">
-          <p>⏳ 正在跨模态检索中...</p>
+          <p id="loadingText">⏳ 正在加载中...</p>
         </div>
-
-        <!-- ALL VIEW (Unified Mixed Feed) -->
-        <div id="viewAll">
-          <div id="allMixedGrid" class="unified-feed-grid"></div>
-        </div>
-
-        <!-- IMAGES VIEW -->
-        <div id="viewImages" style="display:none;">
-          <div id="imagesGrid" class="results-grid"></div>
-        </div>
-
-        <!-- NOTES VIEW -->
-        <div id="viewNotes" style="display:none;">
-          <div id="notesGrid" class="notes-grid"></div>
-        </div>
+        <div id="feedGrid" class="unified-feed-grid"></div>
       </div>
     </div>
   </main>
@@ -1035,153 +1134,187 @@ export function renderDashboardHtml(userEmail) {
   </div>
 
   <script>
-    let currentTab = "all";
-    let currentSort = "time"; // "time" (default newest first) | "score"
-    let currentFeedData = null; // stores { query, tab, notes, images, merged }
-    let isHeroMode = true;
+    let currentMode = "hero"; // "hero" | "search" | "stream"
+    let currentSearchTab = "all"; // "all" | "images" | "notes"
+    let currentSearchSort = "score"; // "score" (DEFAULT FOR SEARCH!) | "time"
+    let currentStreamFilter = "all"; // "all" | "images" | "notes"
 
-    const imageStore = {};
-    const noteStore = {};
+    let searchDataCache = null; // { query, notes, images, merged }
+    let streamDataCache = null; // { stream, stats }
 
-    // Navigation & Mode Switching
-    function switchToActiveMode(query = "") {
-      isHeroMode = false;
+    const itemStore = {};
+
+    // Mode Switching
+    function switchToActiveLayout() {
       document.getElementById("heroSection").style.display = "none";
       const activeSec = document.getElementById("activeSection");
       activeSec.style.display = "flex";
-      document.getElementById("activeSearchInput").value = query;
     }
 
     function resetToHero() {
-      isHeroMode = true;
+      currentMode = "hero";
       document.getElementById("heroSection").style.display = "flex";
       document.getElementById("activeSection").style.display = "none";
       document.getElementById("heroSearchInput").value = "";
       document.getElementById("activeSearchInput").value = "";
+      document.getElementById("feedGrid").innerHTML = "";
       document.getElementById("heroSearchInput").focus();
     }
 
     document.getElementById("headerLogo").addEventListener("click", resetToHero);
     document.getElementById("btnBackHero").addEventListener("click", resetToHero);
 
-    function triggerHeroSearch() {
+    // Form Submissions & Enter Key Handlers
+    function handleHeroSubmit() {
       const q = document.getElementById("heroSearchInput").value.trim();
-      executeSearch(q);
+      if (q) {
+        executeSearch(q);
+      } else {
+        loadStream();
+      }
     }
 
-    function triggerActiveSearch() {
+    function handleActiveSubmit() {
       const q = document.getElementById("activeSearchInput").value.trim();
-      executeSearch(q);
+      if (q) {
+        executeSearch(q);
+      } else {
+        loadStream();
+      }
     }
 
-    // Hero Search (Form submit + Enter key listener)
+    // Hero Search Form + Enter listener
     const heroForm = document.getElementById("heroSearchForm");
     if (heroForm) {
-      heroForm.addEventListener("submit", (e) => {
+      heroForm.addEventListener("submit", function(e) {
         e.preventDefault();
-        triggerHeroSearch();
+        handleHeroSubmit();
       });
     }
-
     const heroInput = document.getElementById("heroSearchInput");
     if (heroInput) {
-      heroInput.addEventListener("keydown", (e) => {
+      heroInput.addEventListener("keydown", function(e) {
         if (e.key === "Enter" || e.keyCode === 13) {
           e.preventDefault();
-          triggerHeroSearch();
+          handleHeroSubmit();
         }
       });
     }
 
-    // Browse Latest Button in Hero
-    document.getElementById("btnBrowseLatest").addEventListener("click", () => {
-      executeSearch("");
+    // Active Search Form + Enter listener
+    const activeForm = document.getElementById("activeSearchForm");
+    if (activeForm) {
+      activeForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+        handleActiveSubmit();
+      });
+    }
+    const activeInput = document.getElementById("activeSearchInput");
+    if (activeInput) {
+      activeInput.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" || e.keyCode === 13) {
+          e.preventDefault();
+          handleActiveSubmit();
+        }
+      });
+    }
+
+    // Browse Stream Buttons
+    document.getElementById("btnBrowseLatest").addEventListener("click", function() {
+      loadStream();
+    });
+    document.getElementById("btnActiveStream").addEventListener("click", function() {
+      loadStream();
     });
 
-    // Chips
-    document.querySelectorAll(".chip-query").forEach(c => {
-      c.addEventListener("click", () => {
+    // Quick Keyword Chips
+    document.querySelectorAll(".chip-query").forEach(function(c) {
+      c.addEventListener("click", function() {
         executeSearch(c.dataset.query);
       });
     });
 
-    // Active Search Bar (Form submit + Enter key listener)
-    const activeForm = document.getElementById("activeSearchForm");
-    if (activeForm) {
-      activeForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        triggerActiveSearch();
-      });
-    }
-
-    const activeInput = document.getElementById("activeSearchInput");
-    if (activeInput) {
-      activeInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.keyCode === 13) {
-          e.preventDefault();
-          triggerActiveSearch();
-        }
-      });
-    }
-
-    // Tabs
-    document.querySelectorAll(".tab-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    // Search Tabs Handler
+    document.querySelectorAll("#searchTabs .tab-btn").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        document.querySelectorAll("#searchTabs .tab-btn").forEach(function(b) { b.classList.remove("active"); });
         btn.classList.add("active");
-        currentTab = btn.dataset.tab;
-
-        document.getElementById("viewAll").style.display = currentTab === "all" ? "block" : "none";
-        document.getElementById("viewImages").style.display = currentTab === "images" ? "block" : "none";
-        document.getElementById("viewNotes").style.display = currentTab === "notes" ? "block" : "none";
-
-        const query = document.getElementById("activeSearchInput").value.trim();
-        executeSearch(query);
+        currentSearchTab = btn.dataset.searchTab;
+        renderSearchView();
       });
     });
 
-    // Sort Switcher
-    const sortTimeBtn = document.getElementById("sortTimeBtn");
+    // Search Sort Switcher Handlers
     const sortScoreBtn = document.getElementById("sortScoreBtn");
+    const sortTimeBtn = document.getElementById("sortTimeBtn");
 
-    sortTimeBtn.addEventListener("click", () => {
-      if (currentSort === "time") return;
-      currentSort = "time";
-      sortTimeBtn.classList.add("active");
-      sortScoreBtn.classList.remove("active");
-      renderCurrentData();
-    });
-
-    sortScoreBtn.addEventListener("click", () => {
-      if (currentSort === "score") return;
-      currentSort = "score";
+    sortScoreBtn.addEventListener("click", function() {
+      if (currentSearchSort === "score") return;
+      currentSearchSort = "score";
       sortScoreBtn.classList.add("active");
       sortTimeBtn.classList.remove("active");
-      renderCurrentData();
+      renderSearchView();
+    });
+
+    sortTimeBtn.addEventListener("click", function() {
+      if (currentSearchSort === "time") return;
+      currentSearchSort = "time";
+      sortTimeBtn.classList.add("active");
+      sortScoreBtn.classList.remove("active");
+      renderSearchView();
+    });
+
+    // Stream Sub-filter Chips Handler
+    document.querySelectorAll("#streamTabs .tab-btn").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        document.querySelectorAll("#streamTabs .tab-btn").forEach(function(b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+        currentStreamFilter = btn.dataset.streamFilter;
+        renderStreamView();
+      });
     });
 
     // Logout
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
+    document.getElementById("logoutBtn").addEventListener("click", async function() {
       await fetch("/api/auth/logout", { method: "POST" });
       window.location.reload();
     });
 
-    // Main Search Executor
+    // ==================== Search Mode Logic (Score Prioritized by Default) ====================
     async function executeSearch(query) {
-      switchToActiveMode(query);
-      showLoading(true);
+      if (!query) {
+        loadStream();
+        return;
+      }
+      currentMode = "search";
+      currentSearchTab = "all";
+      currentSearchSort = "score"; // SEARCH RESULTS MUST DEFAULT TO RELEVANCE / SCORE DESCENDING!
 
+      switchToActiveLayout();
+      document.getElementById("activeSearchInput").value = query;
+      document.getElementById("searchToolbar").style.display = "flex";
+      document.getElementById("streamToolbar").style.display = "none";
+
+      // Reset tab & sort UI buttons
+      document.querySelectorAll("#searchTabs .tab-btn").forEach(function(b) {
+        b.classList.toggle("active", b.dataset.searchTab === "all");
+      });
+      sortScoreBtn.classList.add("active");
+      sortTimeBtn.classList.remove("active");
+      document.getElementById("searchQueryBadge").innerText = "🎯 检索: " + JSON.stringify(query);
+
+      showLoading(true, "⏳ 正在跨模态意图检索...");
       try {
         const res = await fetch("/api/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query, tab: currentTab, limit: 36 })
+          body: JSON.stringify({ query: query, tab: "all", limit: 60 })
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.error || "检索失败");
 
-        currentFeedData = data;
-        renderCurrentData();
+        searchDataCache = data;
+        renderSearchView();
       } catch (err) {
         alert("检索发生错误: " + err.message);
       } finally {
@@ -1189,80 +1322,133 @@ export function renderDashboardHtml(userEmail) {
       }
     }
 
-    // Render Data based on Current Tab and Current Sort
-    function renderCurrentData() {
-      if (!currentFeedData) return;
+    function renderSearchView() {
+      if (!searchDataCache) return;
+      const notes = searchDataCache.notes || [];
+      const images = searchDataCache.images || [];
+      const merged = searchDataCache.merged || [];
 
-      const badge = document.getElementById("resultsCountBadge");
+      document.getElementById("countAll").innerText = merged.length;
+      document.getElementById("countImages").innerText = images.length;
+      document.getElementById("countNotes").innerText = notes.length;
 
-      if (currentTab === "all") {
-        let list = (currentFeedData.merged || []).slice();
-        if (currentSort === "time") {
-          list.sort((a, b) => {
-            const tA = new Date(a.sort_time || a.timestamp || a.captured_at || a.created_at || 0).getTime();
-            const tB = new Date(b.sort_time || b.timestamp || b.captured_at || b.created_at || 0).getTime();
-            return tB - tA;
-          });
-        } else {
-          list.sort((a, b) => (b.score || 0) - (a.score || 0));
-        }
-        badge.innerText = "共 " + list.length + " 项 (" + (currentSort === "time" ? "最新优先" : "相关度优先") + ")";
-        renderMixedFeed(list, "allMixedGrid");
-      } else if (currentTab === "images") {
-        let list = (currentFeedData.results || currentFeedData.images || []).slice();
-        if (currentSort === "time") {
-          list.sort((a, b) => {
-            const tA = new Date(a.captured_at || a.created_at || 0).getTime();
-            const tB = new Date(b.captured_at || b.created_at || 0).getTime();
-            return tB - tA;
-          });
-        } else {
-          list.sort((a, b) => (b.score || 0) - (a.score || 0));
-        }
-        badge.innerText = "共 " + list.length + " 张视觉图片";
-        renderImages(list, "imagesGrid");
-      } else if (currentTab === "notes") {
-        let list = (currentFeedData.results || currentFeedData.notes || []).slice();
-        if (currentSort === "time") {
-          list.sort((a, b) => {
-            const tA = new Date(a.timestamp || 0).getTime();
-            const tB = new Date(b.timestamp || 0).getTime();
-            return tB - tA;
-          });
-        } else {
-          list.sort((a, b) => (b.score || 0) - (a.score || 0));
-        }
-        badge.innerText = "共 " + list.length + " 条便签备忘";
-        renderNotes(list, "notesGrid");
+      let items = [];
+      if (currentSearchTab === "all") {
+        items = merged.slice();
+      } else if (currentSearchTab === "images") {
+        items = images.slice();
+      } else if (currentSearchTab === "notes") {
+        items = notes.slice();
+      }
+
+      if (currentSearchSort === "score") {
+        // Strict relevance descending
+        items.sort(function(a, b) { return (b.score || 0) - (a.score || 0); });
+      } else {
+        // Reverse chronological
+        items.sort(function(a, b) {
+          const tA = new Date(a.sort_time || a.timestamp || a.captured_at || a.created_at || 0).getTime();
+          const tB = new Date(b.sort_time || b.timestamp || b.captured_at || b.created_at || 0).getTime();
+          return tB - tA;
+        });
+      }
+
+      const sortName = currentSearchSort === "score" ? "匹配度优先" : "时间倒序";
+      document.getElementById("searchCountBadge").innerText = "共 " + items.length + " 项 (" + sortName + ")";
+      renderFeedCards(items, true);
+    }
+
+    // ==================== Stream Mode Logic (Strictly Reverse Chronological) ====================
+    async function loadStream() {
+      currentMode = "stream";
+      currentStreamFilter = "all";
+
+      switchToActiveLayout();
+      document.getElementById("activeSearchInput").value = "";
+      document.getElementById("searchToolbar").style.display = "none";
+      document.getElementById("streamToolbar").style.display = "flex";
+
+      // Reset stream sub-filter UI buttons
+      document.querySelectorAll("#streamTabs .tab-btn").forEach(function(b) {
+        b.classList.toggle("active", b.dataset.streamFilter === "all");
+      });
+
+      showLoading(true, "⏳ 正在加载时光全集 (合库漫游)...");
+      try {
+        const res = await fetch("/api/stream?limit=100", { method: "GET" });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || "加载时光全集失败");
+
+        streamDataCache = data;
+        renderStreamView();
+      } catch (err) {
+        alert("加载失败: " + err.message);
+      } finally {
+        showLoading(false);
       }
     }
 
-    // 1. Mixed Feed Renderer (Notes with Embedded Images + Standalone Images)
-    function renderMixedFeed(items, containerId) {
-      const container = document.getElementById(containerId);
+    function renderStreamView() {
+      if (!streamDataCache) return;
+      const stream = streamDataCache.stream || [];
+      const stats = streamDataCache.stats || {};
+
+      document.getElementById("streamCountTotal").innerText = stats.total ?? stream.length;
+      document.getElementById("streamCountImages").innerText = stats.images ?? 0;
+      document.getElementById("streamCountNotes").innerText = stats.notes ?? 0;
+
+      let items = [];
+      if (currentStreamFilter === "all") {
+        items = stream.slice();
+      } else if (currentStreamFilter === "images") {
+        items = stream.filter(function(x) { return x.feed_type === "image"; });
+      } else if (currentStreamFilter === "notes") {
+        items = stream.filter(function(x) { return x.feed_type === "note"; });
+      }
+
+      // Stream Mode is ALWAYS strictly reverse chronological (newest first)
+      items.sort(function(a, b) {
+        const tA = new Date(a.sort_time || a.timestamp || a.captured_at || a.created_at || 0).getTime();
+        const tB = new Date(b.sort_time || b.timestamp || b.captured_at || b.created_at || 0).getTime();
+        return tB - tA;
+      });
+
+      document.getElementById("streamCountBadge").innerText = "共 " + items.length + " 项记录";
+      renderFeedCards(items, false);
+    }
+
+    // ==================== Universal Feed Cards Renderer ====================
+    function renderFeedCards(items, isSearchMode) {
+      const container = document.getElementById("feedGrid");
       if (!items || items.length === 0) {
-        container.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><h3>暂无匹配记录</h3><p>可尝试切换检索词或浏览全部最新</p></div>';
+        container.innerHTML = '<div class="empty-state"><h3>暂无记录</h3><p>' + (isSearchMode ? '未找到相关内容，可尝试更换检索关键词或浏览时光全集' : '知识库中尚无内容') + '</p></div>';
         return;
       }
 
       container.innerHTML = items.map(function(item, idx) {
-        const key = containerId + "_" + idx;
+        const key = "item_" + idx + "_" + (item.id || "0");
+        itemStore[key] = item;
 
-        if (item.feed_type === "note") {
-          noteStore[key] = item;
-          const scoreBadge = (item.score && item.score < 1.0) ? ('<span class="score-badge">匹配度 ' + (item.score * 100).toFixed(1) + '%</span>') : '';
+        if (item.feed_type === "note" || item.type === "note" || item.content !== undefined) {
+          // Note Card (with or without embedded image)
+          const scoreBadge = (isSearchMode && item.score && item.score < 1.0)
+            ? ('<span class="score-badge">🎯 匹配度 ' + (item.score * 100).toFixed(1) + '%</span>')
+            : '';
+          const scoreBadgeInline = (isSearchMode && item.score && item.score < 1.0)
+            ? ('<span class="score-badge-inline">🎯 匹配度 ' + (item.score * 100).toFixed(1) + '%</span>')
+            : '';
           const tagsHtml = (item.tags || []).map(function(t) {
             return '<span class="note-tag">#' + escapeHtml(t) + '</span>';
           }).join('');
-          const dateStr = item.date || (item.timestamp ? item.timestamp.slice(0, 10) : '未知日期');
+          const dateStr = item.date || (item.timestamp ? item.timestamp.slice(0, 10) : "未知日期");
 
           let mediaHtml = '';
           if (item.image && item.image.url) {
-            const imgKey = key + "_img";
-            imageStore[imgKey] = item.image;
-            mediaHtml = '<div class="note-media-wrap" data-img-key="' + imgKey + '">' +
+            const imgKey = key + "_media";
+            itemStore[imgKey] = item.image;
+            mediaHtml = '<div class="note-media-wrap" data-img-key="' + imgKey + '" title="点击查看大图及 EXIF 详情">' +
               '<img class="note-media-img" src="' + escapeHtml(item.image.url) + '" loading="lazy" alt="' + escapeHtml(item.title || '') + '">' +
-              '<span class="media-tag">📷 附图</span>' +
+              '<span class="media-tag">📷 便签附图</span>' +
               scoreBadge +
             '</div>';
           }
@@ -1275,7 +1461,7 @@ export function renderDashboardHtml(userEmail) {
                   '<span>📌</span>' +
                   '<span>' + escapeHtml(item.title || '无标题便签') + '</span>' +
                 '</div>' +
-                (!mediaHtml ? scoreBadge : '') +
+                (!mediaHtml ? scoreBadgeInline : '') +
               '</div>' +
               (tagsHtml ? ('<div class="note-tags">' + tagsHtml + '</div>') : '') +
               '<div class="note-content">' + escapeHtml(item.content || '') + '</div>' +
@@ -1289,13 +1475,14 @@ export function renderDashboardHtml(userEmail) {
             '</div>' +
           '</div>';
         } else {
-          // Standalone Image
-          imageStore[key] = item;
-          const scoreBadge = (item.score && item.score < 1.0) ? ('<span class="score-badge">相似度 ' + (item.score * 100).toFixed(1) + '%</span>') : '';
+          // Standalone Photography Image Card
+          const scoreBadge = (isSearchMode && item.score && item.score < 1.0)
+            ? ('<span class="score-badge">🎯 相似度 ' + (item.score * 100).toFixed(1) + '%</span>')
+            : '<span class="card-type-badge">📷 摄影照片</span>';
           const metaDevice = (item.exif && item.exif.device) ? ('📷 ' + escapeHtml(item.exif.device)) : (item.created_at ? item.created_at.slice(0, 10) : '');
           const metaLoc = (item.location && item.location.lat) ? '<span>📍 有GPS</span>' : '';
 
-          return '<div class="card" data-img-key="' + key + '" id="imgcard_' + (item.id || '') + '">' +
+          return '<div class="card" data-img-key="' + key + '" id="imgcard_' + (item.id || '') + '" title="点击查看大图及 EXIF 详情">' +
             '<div class="card-img-wrap">' +
               '<img class="card-img" src="' + (item.url || '') + '" loading="lazy" alt="' + escapeHtml(item.title || item.filename || '') + '">' +
               scoreBadge +
@@ -1314,167 +1501,51 @@ export function renderDashboardHtml(userEmail) {
           '</div>';
         }
       }).join('');
-
-      container.onclick = function(e) {
-        // Delete note
-        const delNoteBtn = e.target.closest('.btn-delete-note');
-        if (delNoteBtn && delNoteBtn.dataset.id) {
-          e.stopPropagation();
-          deleteNote(delNoteBtn.dataset.id, delNoteBtn.closest('.note-card'));
-          return;
-        }
-
-        // Delete image
-        const delImgBtn = e.target.closest('.btn-delete-img-card');
-        if (delImgBtn && delImgBtn.dataset.id) {
-          e.stopPropagation();
-          deleteImage(delImgBtn.dataset.id, delImgBtn.closest('.card'));
-          return;
-        }
-
-        // Copy note content
-        const copyBtn = e.target.closest('.btn-copy');
-        if (copyBtn && copyBtn.dataset.key && noteStore[copyBtn.dataset.key]) {
-          copyContent(copyBtn, noteStore[copyBtn.dataset.key].content || '');
-          return;
-        }
-
-        // Open image modal from note media
-        const noteMedia = e.target.closest('.note-media-wrap');
-        if (noteMedia && noteMedia.dataset.imgKey && imageStore[noteMedia.dataset.imgKey]) {
-          openImageModal(imageStore[noteMedia.dataset.imgKey]);
-          return;
-        }
-
-        // Open image modal from standalone card
-        const imgCard = e.target.closest('.card');
-        if (imgCard && imgCard.dataset.imgKey && imageStore[imgCard.dataset.imgKey]) {
-          openImageModal(imageStore[imgCard.dataset.imgKey]);
-          return;
-        }
-      };
     }
 
-    // 2. Standalone Images Renderer
-    function renderImages(images, containerId) {
-      const container = document.getElementById(containerId);
-      if (!images || images.length === 0) {
-        container.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><p>未找到视觉照片</p></div>';
+    // Grid Click Event Delegation
+    document.getElementById("feedGrid").addEventListener("click", function(e) {
+      // 1. Delete note button
+      const delNoteBtn = e.target.closest('.btn-delete-note');
+      if (delNoteBtn && delNoteBtn.dataset.id) {
+        e.stopPropagation();
+        deleteNote(delNoteBtn.dataset.id, delNoteBtn.closest('.note-card'));
         return;
       }
 
-      container.innerHTML = images.map(function(img, idx) {
-        const key = containerId + "_" + idx;
-        imageStore[key] = img;
-        const scoreBadge = (img.score && img.score < 1.0) ? ('<span class="score-badge">相似度 ' + (img.score * 100).toFixed(1) + '%</span>') : '';
-        const metaDevice = (img.exif && img.exif.device) ? ('📷 ' + escapeHtml(img.exif.device)) : (img.created_at ? img.created_at.slice(0, 10) : '');
-        const metaLoc = (img.location && img.location.lat) ? '<span>📍 有GPS</span>' : '';
-
-        return '<div class="card" data-key="' + key + '" id="imgcard_' + (img.id || '') + '">' +
-          '<div class="card-img-wrap">' +
-            '<img class="card-img" src="' + (img.url || '') + '" loading="lazy" alt="' + escapeHtml(img.title || img.filename || '') + '">' +
-            scoreBadge +
-          '</div>' +
-          '<div class="card-body">' +
-            '<div class="card-title">' + escapeHtml(img.title || img.filename || '未命名') + '</div>' +
-            '<div class="card-desc">' + escapeHtml(img.description || '无描述') + '</div>' +
-            '<div class="card-meta">' +
-              '<span>' + metaDevice + '</span>' +
-              '<div style="display:flex; align-items:center; gap:0.4rem;">' +
-                metaLoc +
-                '<button class="btn-delete-img-card" data-id="' + (img.id || '') + '" title="彻底删除此图片">🗑️ 删除</button>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('');
-
-      container.onclick = function(e) {
-        const delBtn = e.target.closest('.btn-delete-img-card');
-        if (delBtn && delBtn.dataset.id) {
-          e.stopPropagation();
-          deleteImage(delBtn.dataset.id, delBtn.closest('.card'));
-          return;
-        }
-        const card = e.target.closest('.card');
-        if (card && card.dataset.key && imageStore[card.dataset.key]) {
-          openImageModal(imageStore[card.dataset.key]);
-        }
-      };
-    }
-
-    // 3. Notes Renderer (with Embedded Media if Available)
-    function renderNotes(notes, containerId) {
-      const container = document.getElementById(containerId);
-      if (!notes || notes.length === 0) {
-        container.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><p>未找到便签备忘</p></div>';
+      // 2. Delete image button on card
+      const delImgBtn = e.target.closest('.btn-delete-img-card');
+      if (delImgBtn && delImgBtn.dataset.id) {
+        e.stopPropagation();
+        deleteImage(delImgBtn.dataset.id, delImgBtn.closest('.card'));
         return;
       }
 
-      container.innerHTML = notes.map(function(n, idx) {
-        const key = containerId + "_" + idx;
-        noteStore[key] = n;
-        const scoreBadge = (n.score && n.score < 1.0) ? ('<span class="score-badge">匹配度 ' + (n.score * 100).toFixed(1) + '%</span>') : '';
-        const tagsHtml = (n.tags || []).map(function(t) {
-          return '<span class="note-tag">#' + escapeHtml(t) + '</span>';
-        }).join('');
-        const dateStr = n.date || (n.timestamp ? n.timestamp.slice(0, 10) : '未知日期');
+      // 3. Copy note content button
+      const copyBtn = e.target.closest('.btn-copy');
+      if (copyBtn && copyBtn.dataset.key && itemStore[copyBtn.dataset.key]) {
+        e.stopPropagation();
+        copyContent(copyBtn, itemStore[copyBtn.dataset.key].content || "");
+        return;
+      }
 
-        let mediaHtml = '';
-        if (n.image && n.image.url) {
-          const imgKey = key + "_img";
-          imageStore[imgKey] = n.image;
-          mediaHtml = '<div class="note-media-wrap" data-img-key="' + imgKey + '">' +
-            '<img class="note-media-img" src="' + escapeHtml(n.image.url) + '" loading="lazy" alt="' + escapeHtml(n.title || '') + '">' +
-            '<span class="media-tag">📷 附图</span>' +
-            scoreBadge +
-          '</div>';
-        }
+      // 4. Note embedded image clicked -> open modal
+      const noteMedia = e.target.closest('.note-media-wrap');
+      if (noteMedia && noteMedia.dataset.imgKey && itemStore[noteMedia.dataset.imgKey]) {
+        e.stopPropagation();
+        openImageModal(itemStore[noteMedia.dataset.imgKey]);
+        return;
+      }
 
-        return '<div class="note-card" id="notecard_' + (n.id || '') + '">' +
-          mediaHtml +
-          '<div class="note-inner">' +
-            '<div class="note-header">' +
-              '<div class="note-title">' +
-                '<span>📌</span>' +
-                '<span>' + escapeHtml(n.title || '无标题便签') + '</span>' +
-              '</div>' +
-              (!mediaHtml ? scoreBadge : '') +
-            '</div>' +
-            (tagsHtml ? ('<div class="note-tags">' + tagsHtml + '</div>') : '') +
-            '<div class="note-content">' + escapeHtml(n.content || '') + '</div>' +
-            '<div class="note-footer">' +
-              '<span>📅 ' + dateStr + '</span>' +
-              '<div class="note-actions">' +
-                '<button class="btn-copy" data-key="' + key + '">📋 复制</button>' +
-                '<button class="btn-delete-note" data-id="' + (n.id || '') + '" title="删除此便签">🗑️ 删除</button>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('');
+      // 5. Standalone image card clicked -> open modal
+      const imgCard = e.target.closest('.card');
+      if (imgCard && imgCard.dataset.imgKey && itemStore[imgCard.dataset.imgKey]) {
+        openImageModal(itemStore[imgCard.dataset.imgKey]);
+        return;
+      }
+    });
 
-      container.onclick = function(e) {
-        const delBtn = e.target.closest('.btn-delete-note');
-        if (delBtn && delBtn.dataset.id) {
-          e.stopPropagation();
-          deleteNote(delBtn.dataset.id, delBtn.closest('.note-card'));
-          return;
-        }
-        const copyBtn = e.target.closest('.btn-copy');
-        if (copyBtn && copyBtn.dataset.key && noteStore[copyBtn.dataset.key]) {
-          copyContent(copyBtn, noteStore[copyBtn.dataset.key].content || '');
-          return;
-        }
-        const noteMedia = e.target.closest('.note-media-wrap');
-        if (noteMedia && noteMedia.dataset.imgKey && imageStore[noteMedia.dataset.imgKey]) {
-          openImageModal(imageStore[noteMedia.dataset.imgKey]);
-          return;
-        }
-      };
-    }
-
-    // Modal
+    // Image Modal Logic
     let currentModalImg = null;
 
     function openImageModal(img) {
@@ -1520,7 +1591,7 @@ export function renderDashboardHtml(userEmail) {
       document.getElementById(id).style.display = "none";
     }
 
-    // Note Deletion
+    // Delete Note
     async function deleteNote(id, cardEl) {
       if (!id) return;
       if (!confirm("⚠️ 确定要彻底删除该便签备忘吗？此操作将从向量知识库中物理移除，不可撤回。")) {
@@ -1530,27 +1601,39 @@ export function renderDashboardHtml(userEmail) {
         const res = await fetch("/api/notes/delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id })
+          body: JSON.stringify({ id: id })
         });
         const data = await res.json();
         if (!res.ok || !data.success) {
           throw new Error(data.error || "删除便签失败");
         }
         showToast("🗑️ 便签已成功删除");
+
+        // Remove from memory caches
+        if (streamDataCache && streamDataCache.stream) {
+          streamDataCache.stream = streamDataCache.stream.filter(function(x) { return x.id !== id; });
+          if (streamDataCache.stats && streamDataCache.stats.notes) streamDataCache.stats.notes--;
+          if (streamDataCache.stats && streamDataCache.stats.total) streamDataCache.stats.total--;
+        }
+        if (searchDataCache) {
+          if (searchDataCache.merged) searchDataCache.merged = searchDataCache.merged.filter(function(x) { return x.id !== id; });
+          if (searchDataCache.notes) searchDataCache.notes = searchDataCache.notes.filter(function(x) { return x.id !== id; });
+        }
+
         if (cardEl) {
           cardEl.style.transition = "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
           cardEl.style.opacity = "0";
           cardEl.style.transform = "scale(0.9)";
-          setTimeout(() => cardEl.remove(), 300);
+          setTimeout(function() { cardEl.remove(); }, 300);
         } else {
-          document.querySelectorAll('#notecard_' + id).forEach(el => el.remove());
+          document.querySelectorAll("#notecard_" + id).forEach(function(el) { el.remove(); });
         }
       } catch (err) {
         alert("删除便签失败: " + err.message);
       }
     }
 
-    // Image Deletion
+    // Delete Image
     async function deleteImage(id, cardEl) {
       if (!id) return;
       if (!confirm("⚠️ 确定要彻底删除该视觉图片吗？此操作将同步销毁 Cloudflare Images 云端存储与向量检索索引，不可撤回。")) {
@@ -1560,7 +1643,7 @@ export function renderDashboardHtml(userEmail) {
         const res = await fetch("/api/images/delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id })
+          body: JSON.stringify({ id: id })
         });
         const data = await res.json();
         if (!res.ok || !data.success) {
@@ -1568,17 +1651,29 @@ export function renderDashboardHtml(userEmail) {
         }
         showToast("🗑️ 图片资产已成功删除");
         closeModal("imgModal");
+
+        // Remove from memory caches
+        if (streamDataCache && streamDataCache.stream) {
+          streamDataCache.stream = streamDataCache.stream.filter(function(x) { return x.id !== id; });
+          if (streamDataCache.stats && streamDataCache.stats.images) streamDataCache.stats.images--;
+          if (streamDataCache.stats && streamDataCache.stats.total) streamDataCache.stats.total--;
+        }
+        if (searchDataCache) {
+          if (searchDataCache.merged) searchDataCache.merged = searchDataCache.merged.filter(function(x) { return x.id !== id; });
+          if (searchDataCache.images) searchDataCache.images = searchDataCache.images.filter(function(x) { return x.id !== id; });
+        }
+
         if (cardEl) {
           cardEl.style.transition = "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
           cardEl.style.opacity = "0";
           cardEl.style.transform = "scale(0.9)";
-          setTimeout(() => cardEl.remove(), 300);
+          setTimeout(function() { cardEl.remove(); }, 300);
         }
-        document.querySelectorAll('#imgcard_' + id).forEach(el => {
+        document.querySelectorAll("#imgcard_" + id).forEach(function(el) {
           el.style.transition = "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
           el.style.opacity = "0";
           el.style.transform = "scale(0.9)";
-          setTimeout(() => el.remove(), 300);
+          setTimeout(function() { el.remove(); }, 300);
         });
       } catch (err) {
         alert("删除图片失败: " + err.message);
@@ -1595,19 +1690,23 @@ export function renderDashboardHtml(userEmail) {
       }
       t.innerText = msg;
       t.classList.add("show");
-      setTimeout(() => t.classList.remove("show"), 2500);
+      setTimeout(function() { t.classList.remove("show"); }, 2500);
     }
 
     function copyContent(btn, text) {
-      navigator.clipboard.writeText(text).then(() => {
+      navigator.clipboard.writeText(text).then(function() {
         const orig = btn.innerText;
         btn.innerText = "✅ 已复制";
-        setTimeout(() => btn.innerText = orig, 1500);
+        setTimeout(function() { btn.innerText = orig; }, 1500);
       });
     }
 
-    function showLoading(show) {
-      document.getElementById("loadingState").style.display = show ? "block" : "none";
+    function showLoading(show, msg) {
+      const loader = document.getElementById("loadingState");
+      if (loader) {
+        loader.style.display = show ? "block" : "none";
+        if (msg) document.getElementById("loadingText").innerText = msg;
+      }
     }
 
     function escapeHtml(str) {
@@ -1619,9 +1718,6 @@ export function renderDashboardHtml(userEmail) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
     }
-
-    // Notice: Initial load does NOT make any background fetch requests!
-    // Google-style clean open with 0ms delay!
   </script>
 </body>
 </html>`;

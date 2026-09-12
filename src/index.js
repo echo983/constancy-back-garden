@@ -578,15 +578,20 @@ export default {
           }))
         ];
 
-        // Default sort: reverse chronological (newest first)
-        merged.sort((a, b) => {
-          const tA = new Date(a.sort_time || 0).getTime();
-          const tB = new Date(b.sort_time || 0).getTime();
-          return tB - tA;
-        });
+        // Search Mode: strictly sorted by relevance / score descending!
+        if (queryVector) {
+          merged.sort((a, b) => (b.score || 0) - (a.score || 0));
+        } else {
+          merged.sort((a, b) => {
+            const tA = new Date(a.sort_time || 0).getTime();
+            const tB = new Date(b.sort_time || 0).getTime();
+            return tB - tA;
+          });
+        }
 
         return jsonResponse({
           success: true,
+          mode: query ? "search" : "stream",
           tab: "all",
           query: query || "",
           notes: resolvedNotes,
@@ -598,7 +603,166 @@ export default {
       }
     }
 
-    // 2. List Images
+    // 2. Merged Stream (Browse Mode: Unified Notes + Images, strictly reverse chronological)
+    if ((url.pathname === "/api/stream" || url.pathname === "/api/feed") && (request.method === "GET" || request.method === "POST")) {
+      try {
+        const body = request.method === "POST" ? await request.json().catch(() => ({})) : {};
+        const limit = Math.min(Math.max(parseInt(body.limit || url.searchParams.get("limit")) || 100, 1), 200);
+
+        // Fetch both collections in parallel using scroll
+        const [imagesRes, notesRes] = await Promise.all([
+          qdrantFetch(`${env.QDRANT_URL.replace(/\/+$/, "")}/collections/images/points/scroll`, env, {
+            method: "POST",
+            body: JSON.stringify({
+              limit,
+              filter: userFilter,
+              with_payload: true,
+              with_vector: false
+            })
+          }),
+          qdrantFetch(`${env.QDRANT_URL.replace(/\/+$/, "")}/collections/constancy_memories/points/scroll`, env, {
+            method: "POST",
+            body: JSON.stringify({
+              limit,
+              filter: {
+                must: [
+                  { key: "user_id", match: { value: user } },
+                  { key: "type", match: { value: "note" } }
+                ]
+              },
+              with_payload: true,
+              with_vector: false
+            })
+          })
+        ]);
+
+        if (!imagesRes.ok) {
+          const errText = await imagesRes.text();
+          return errorResponse(`Qdrant images scroll error (${imagesRes.status}): ${errText}`, 502);
+        }
+        if (!notesRes.ok) {
+          const errText = await notesRes.text();
+          return errorResponse(`Qdrant notes scroll error (${notesRes.status}): ${errText}`, 502);
+        }
+
+        const [imagesData, notesData] = await Promise.all([imagesRes.json(), notesRes.json()]);
+        const imagePoints = imagesData.result?.points || [];
+        const notePoints = notesData.result?.points || [];
+
+        // Format and sign image URLs
+        const resolvedImages = await Promise.all(
+          imagePoints.map(async pt => {
+            const imageId = pt.payload?.image_id;
+            let displayUrl = "";
+            if (imageId && env.IMAGES) {
+              try {
+                displayUrl = await env.IMAGES.hosted.image(imageId).signedUrl({
+                  variant: "public",
+                  expiresIn: 7200
+                });
+              } catch (e) {}
+            }
+            return {
+              id: pt.id,
+              image_id: imageId,
+              filename: pt.payload?.filename || "untitled",
+              title: pt.payload?.title || pt.payload?.filename || "未命名图片",
+              description: pt.payload?.description || "",
+              tags: pt.payload?.tags || [],
+              exif: pt.payload?.exif || null,
+              location: pt.payload?.location || null,
+              captured_at: pt.payload?.captured_at || pt.payload?.created_at,
+              created_at: pt.payload?.created_at,
+              url: displayUrl
+            };
+          })
+        );
+
+        // Format notes and sign associated images
+        const resolvedNotes = await Promise.all(
+          notePoints.map(async pt => {
+            const assocImageId = extractImageIdFromPayload(pt.payload);
+            const imageUrl = assocImageId ? await getSignedImageUrl(assocImageId, env) : "";
+            return {
+              id: pt.id,
+              type: pt.payload?.type,
+              title: pt.payload?.title || pt.payload?.entities?.[0] || "无标题便签",
+              content: pt.payload?.content || "",
+              tags: pt.payload?.tags || [],
+              date: pt.payload?.date || (pt.payload?.timestamp ? pt.payload.timestamp.slice(0, 10) : ""),
+              timestamp: pt.payload?.timestamp,
+              image_id: assocImageId || undefined,
+              image_url: imageUrl || undefined,
+              image: assocImageId && imageUrl ? {
+                id: assocImageId,
+                image_id: assocImageId,
+                url: imageUrl,
+                title: pt.payload?.title || "便签附图"
+              } : null,
+              has_base64: Boolean(pt.payload?.base64),
+              mime_type: pt.payload?.mime_type,
+              c_h: pt.payload?.ch_prior,
+              sha256: pt.payload?.sha256
+            };
+          })
+        );
+
+        // Link full image metadata if available in resolvedImages
+        const imgMap = new Map();
+        for (const img of resolvedImages) {
+          if (img.image_id) imgMap.set(img.image_id, img);
+        }
+        for (const note of resolvedNotes) {
+          if (note.image_id && imgMap.has(note.image_id)) {
+            note.image = imgMap.get(note.image_id);
+            if (!note.image_url && note.image.url) {
+              note.image_url = note.image.url;
+            }
+          }
+        }
+
+        // Deduplicate: images attached to notes are embedded in note cards;
+        // remove them from standalone images to prevent duplicate presentation.
+        const referencedImageIds = new Set(resolvedNotes.map(n => n.image_id).filter(Boolean));
+        const standaloneImages = resolvedImages.filter(img => !referencedImageIds.has(img.image_id));
+
+        // Build merged unified stream
+        const stream = [
+          ...resolvedNotes.map(n => ({
+            ...n,
+            feed_type: "note",
+            sort_time: n.timestamp || (n.date ? n.date + "T00:00:00Z" : "")
+          })),
+          ...standaloneImages.map(img => ({
+            ...img,
+            feed_type: "image",
+            sort_time: img.captured_at || img.created_at || ""
+          }))
+        ];
+
+        // STRICTLY sort by time descending (newest first)
+        stream.sort((a, b) => {
+          const tA = new Date(a.sort_time || 0).getTime();
+          const tB = new Date(b.sort_time || 0).getTime();
+          return tB - tA;
+        });
+
+        return jsonResponse({
+          success: true,
+          mode: "stream",
+          stream,
+          stats: {
+            total: stream.length,
+            notes: resolvedNotes.length,
+            images: standaloneImages.length
+          }
+        });
+      } catch (err) {
+        return errorResponse("Failed to load stream: " + err.message, 500);
+      }
+    }
+
+    // 3. List Images
     if (url.pathname === "/api/images" && request.method === "GET") {
       try {
         const qdrantUrl = `${env.QDRANT_URL.replace(/\/+$/, "")}/collections/images/points/scroll`;
