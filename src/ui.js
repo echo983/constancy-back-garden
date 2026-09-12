@@ -940,18 +940,18 @@ export function renderDashboardHtml(userEmail) {
       </div>
 
       <div class="hero-search-panel">
-        <div class="hero-search-bar">
-          <input type="text" id="heroSearchInput" class="hero-search-input" placeholder="输入关键词检索记忆、便签或视觉图片... (Enter 键开始)" autofocus>
-          <button id="heroSearchBtn" class="btn-hero-search">智能检索</button>
-        </div>
+        <form id="heroSearchForm" class="hero-search-bar" action="javascript:void(0);">
+          <input type="text" id="heroSearchInput" class="hero-search-input" placeholder="输入关键词检索记忆、便签或视觉图片... (Enter 键开始)" autofocus autocomplete="off">
+          <button type="submit" id="heroSearchBtn" class="btn-hero-search">智能检索</button>
+        </form>
         <div class="hero-chips">
-          <button class="chip chip-accent" id="btnBrowseLatest">🕒 浏览最新时光轴</button>
+          <button type="button" class="chip chip-accent" id="btnBrowseLatest">🕒 浏览最新时光轴</button>
           <span class="chip-label">快捷检索：</span>
-          <button class="chip chip-query" data-query="MinIO 部署架构">MinIO 部署架构</button>
-          <button class="chip chip-query" data-query="服务器机柜">服务器机柜</button>
-          <button class="chip chip-query" data-query="徽章 图标">徽章 图标</button>
-          <button class="chip chip-query" data-query="速查 配置">速查 配置</button>
-          <button class="chip chip-query" data-query="街景 夜景">街景 夜景</button>
+          <button type="button" class="chip chip-query" data-query="MinIO 部署架构">MinIO 部署架构</button>
+          <button type="button" class="chip chip-query" data-query="服务器机柜">服务器机柜</button>
+          <button type="button" class="chip chip-query" data-query="徽章 图标">徽章 图标</button>
+          <button type="button" class="chip chip-query" data-query="速查 配置">速查 配置</button>
+          <button type="button" class="chip chip-query" data-query="街景 夜景">街景 夜景</button>
         </div>
       </div>
 
@@ -964,11 +964,11 @@ export function renderDashboardHtml(userEmail) {
     <!-- ==================== 2. Active Search / Results Mode ==================== -->
     <div id="activeSection">
       <div class="search-panel">
-        <div class="search-bar-wrap">
-          <input type="text" id="activeSearchInput" class="search-input" placeholder="输入关键词检索记忆、便签或视觉图片... (Enter 键刷新)">
-          <button id="activeSearchBtn" class="btn-search">智能检索</button>
-          <button id="btnBackHero" class="btn-back-hero" title="返回极简主页">✕ 返回主页</button>
-        </div>
+        <form id="activeSearchForm" class="search-bar-wrap" action="javascript:void(0);">
+          <input type="text" id="activeSearchInput" class="search-input" placeholder="输入关键词检索记忆、便签或视觉图片... (Enter 键刷新)" autocomplete="off">
+          <button type="submit" id="activeSearchBtn" class="btn-search">智能检索</button>
+          <button type="button" id="btnBackHero" class="btn-back-hero" title="返回极简主页">✕ 返回主页</button>
+        </form>
         <div class="results-toolbar">
           <div class="nav-tabs">
             <button class="tab-btn active" data-tab="all">🔍 聚合时光轴 (图文混排)</button>
@@ -1064,16 +1064,34 @@ export function renderDashboardHtml(userEmail) {
     document.getElementById("headerLogo").addEventListener("click", resetToHero);
     document.getElementById("btnBackHero").addEventListener("click", resetToHero);
 
-    // Hero Search
-    document.getElementById("heroSearchBtn").addEventListener("click", () => {
+    function triggerHeroSearch() {
       const q = document.getElementById("heroSearchInput").value.trim();
       executeSearch(q);
-    });
-    document.getElementById("heroSearchInput").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        executeSearch(document.getElementById("heroSearchInput").value.trim());
-      }
-    });
+    }
+
+    function triggerActiveSearch() {
+      const q = document.getElementById("activeSearchInput").value.trim();
+      executeSearch(q);
+    }
+
+    // Hero Search (Form submit + Enter key listener)
+    const heroForm = document.getElementById("heroSearchForm");
+    if (heroForm) {
+      heroForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        triggerHeroSearch();
+      });
+    }
+
+    const heroInput = document.getElementById("heroSearchInput");
+    if (heroInput) {
+      heroInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.keyCode === 13) {
+          e.preventDefault();
+          triggerHeroSearch();
+        }
+      });
+    }
 
     // Browse Latest Button in Hero
     document.getElementById("btnBrowseLatest").addEventListener("click", () => {
@@ -1087,15 +1105,24 @@ export function renderDashboardHtml(userEmail) {
       });
     });
 
-    // Active Search Bar
-    document.getElementById("activeSearchBtn").addEventListener("click", () => {
-      executeSearch(document.getElementById("activeSearchInput").value.trim());
-    });
-    document.getElementById("activeSearchInput").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        executeSearch(document.getElementById("activeSearchInput").value.trim());
-      }
-    });
+    // Active Search Bar (Form submit + Enter key listener)
+    const activeForm = document.getElementById("activeSearchForm");
+    if (activeForm) {
+      activeForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        triggerActiveSearch();
+      });
+    }
+
+    const activeInput = document.getElementById("activeSearchInput");
+    if (activeInput) {
+      activeInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.keyCode === 13) {
+          e.preventDefault();
+          triggerActiveSearch();
+        }
+      });
+    }
 
     // Tabs
     document.querySelectorAll(".tab-btn").forEach(btn => {
