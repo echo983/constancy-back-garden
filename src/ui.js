@@ -1523,7 +1523,7 @@ export function renderDashboardHtml(userEmail) {
     // Note Deletion
     async function deleteNote(id, cardEl) {
       if (!id) return;
-      if (!confirm("⚠️ 确定要彻底删除该便签备忘吗？\n\n此操作将从向量知识库中物理移除，不可撤回。")) {
+      if (!confirm("⚠️ 确定要彻底删除该便签备忘吗？此操作将从向量知识库中物理移除，不可撤回。")) {
         return;
       }
       try {
@@ -1553,7 +1553,7 @@ export function renderDashboardHtml(userEmail) {
     // Image Deletion
     async function deleteImage(id, cardEl) {
       if (!id) return;
-      if (!confirm("⚠️ 确定要彻底删除该视觉图片吗？\n\n此操作将同步销毁 Cloudflare Images 云端存储与向量检索索引，不可撤回。")) {
+      if (!confirm("⚠️ 确定要彻底删除该视觉图片吗？此操作将同步销毁 Cloudflare Images 云端存储与向量检索索引，不可撤回。")) {
         return;
       }
       try {
